@@ -1,0 +1,426 @@
+#! /bin/bash
+# To pre & post check servers
+#
+echo ""
+read -p "	Pre-check (1) or Post-check (2)? [1 or 2] " ans
+
+if [ $ans == "1" ]
+then
+echo ""
+
+# Reading CRQ Number
+
+read -p "	Please enter the CRQ number? : " CRQ 
+echo ""
+
+echo "	Started Pre-checks ..."
+echo ""
+
+file1=/software/hit/scripts/tr/bios_helper.sh 
+file2=/software/hit/scripts/tr/TR-Server-Report.sh
+
+for s in `cat hosts_list`
+do
+echo -e "	Sending bios_helper.sh & TR-Server-Report.sh to "$s - "`host $s | cut -d " " -f5`"" .." && sshpass -p01Mar2019 scpadmin -o LogLevel=error $file1 $file2  $s:/var/tmp/
+
+echo " "
+echo "	Taking pre-checks in "$s - "`host $s | cut -d " " -f5`"" .." && sshpass -p01Mar2019 sshadmin $s -qtt "sudo bash -c 'export CRQ='"'$CRQ'"';
+
+mkdir /root/PRE-$CRQ ;
+/sbin/ifconfig -a |  tee  /root/PRE-$CRQ/ifconfig-$(date +%Y%m%d)  > /dev/null ;
+mount |  tee /root/PRE-$CRQ/mount-$(date +%Y%m%d)  > /dev/null ;
+cat /etc/fstab |  tee /root/PRE-$CRQ/fstab-$(date +%Y%m%d) > /dev/null ;
+for i in `/sbin/ifconfig|grep eth|awk '\''{print $1}'\''`; do echo $i;  cat /etc/sysconfig/network-scripts/ifcfg-"$i" | egrep -i "device|hwaddr"; echo; done |  tee /root/PRE-$CRQ/ifcfg-eth-$(date +%Y%m%d)  > /dev/null ;
+/sbin/route -n |  tee /root/PRE-$CRQ/route-$(date +%Y%m%d)  > /dev/null ;
+for i in ` /sbin/ifconfig|grep eth|awk '\''{print $1}'\''`; do echo $i;  cat /etc/sysconfig/network-scripts/route-$i; echo; done |  tee /root/PRE-$CRQ/route-eth-$(date +%Y%m%d)  > /dev/null ;
+ps auxwf |  tee /root/PRE-$CRQ/ps-$(date +%Y%m%d)  > /dev/null ;
+/etc/init.d/monitor status |  tee /root/PRE-$CRQ/monitor-$(date +%Y%m%d)  > /dev/null ;
+cat /etc/redhat-release |  tee /root/PRE-$CRQ/redhat-release-$(date +%Y%m%d)  > /dev/null ;
+uname -a |  tee /root/PRE-$CRQ/uname-$(date +%Y%m%d)  > /dev/null ;
+df -h |  tee /root/PRE-$CRQ/df-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/pvs |  tee /root/PRE-$CRQ/pvs-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/lvs |  tee /root/PRE-$CRQ/lvs-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/vgs |  tee /root/PRE-$CRQ/vgs-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/fdisk -l |  tee /root/PRE-$CRQ/fdisk_l-$(date +%Y%m%d)  > /dev/null ;
+netstat -an |  tee /root/PRE-$CRQ/netstat-$(date +%Y%m%d)  > /dev/null ;
+netstat -anp | egrep "14002|8101" |  tee /root/PRE-$CRQ/ADS-stat-$(date +%Y%m%d)  > /dev/null ;
+/sbin/chkconfig --list |  tee /root/PRE-$CRQ/chkconfig-$(date +%Y%m%d)  > /dev/null ;
+free -m | tee /root/PRE-$CRQ/swap-$(date +%Y%m%d)  > /dev/null ;
+/sbin/hpasmcli -s "show server" |  tee /root/PRE-$CRQ/hpasmcli-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/hpssacli ctrl slot=0 show |  tee /root/PRE-$CRQ/hpssacli-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/hpssacli ctrl all show config detail |  tee /root/PRE-$CRQ/hpssacli-array-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/hpacucli ctrl slot=0 show |  tee /root/PRE-$CRQ/hpacucli-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/hpacucli ctrl all show config detail |  tee /root/PRE-$CRQ/hpacucli-array-$(date +%Y%m%d)  > /dev/null ;
+/sbin/hponcfg -w /tmp/ilo |  tee /root/PRE-$CRQ/ilo-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/dmidecode --type 0 |  tee /root/PRE-$CRQ/bios-$(date +%Y%m%d)  > /dev/null ;
+uptime | tee /root/PRE-$CRQ/uptime-$(date +%Y%m%d)  > /dev/null ;
+/sbin/ip a | tee /root/PRE-$CRQ/ip-$(date +%Y%m%d)  > /dev/null ;
+ntpstat |  tee /root/PRE-$CRQ/ntpstat-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/rhn-channel -l |  tee /root/PRE-$CRQ/rhn_channel-$(date +%Y%m%d)  > /dev/null ;
+/usr/sbin/getenforce |  tee /root/PRE-$CRQ/getenforce-$(date +%Y%m%d)  > /dev/null ;
+/sbin/service iptables status |  tee /root/PRE-$CRQ/iptables-$(date +%Y%m%d)  > /dev/null ;
+cd /usr/local/svvs/home/svadmin;  ./TR-Server-Report.sh  |  tee /root/PRE-$CRQ/Server-Report-$(date +%Y%m%d)  > /dev/null ;
+cd /var/tmp;  ./TR-Server-Report.sh  |  tee /root/PRE-$CRQ/Server-Report-1-$(date +%Y%m%d)  > /dev/null ;
+for i in ` /sbin/ifconfig|grep eth|awk '\''{print $1}'\''`; do echo $i;  /sbin/ethtool $i  ; done |  tee /root/PRE-$CRQ/ethtool-eth-$(date +%Y%m%d)  > /dev/null ;
+ls -d -C1 /sys/block/sd*/device/scsi_disk* |  tee /root/PRE-${CRQ}/scsi_disk-$(date +%Y%m%d)  > /dev/null ;
+cat /proc/scsi/scsi |  tee /root/PRE-${CRQ}/proc-scsi-$(date +%Y%m%d)  > /dev/null ; 
+/sbin/conrep -s -f /root/PRE-$CRQ/bios.dat-$(date +%Y%m%d) > /dev/null ; 
+sh /var/tmp/bios_helper.sh -c -v |  tee /root/PRE-$CRQ/bios-check-$(date +%y%m%d) > /dev/null ; 
+cd /usr/local/svvs/home/svadmin;  sh /bios_helper.sh -c -v |  tee -a /root/PRE-$CRQ/bios-check-1-$(date +%y%m%d) > /dev/null ; 
+
+cp /etc/services /root/PRE-$CRQ/services-$(date +%Y%m%d);
+cp /etc/sysctl.conf /root/PRE-$CRQ/sysctl.conf-$(date +%Y%m%d);
+cp /etc/modprobe.conf /root/PRE-$CRQ/modprobe-$(date +%Y%m%d);
+cp /etc/rc.local /root/PRE-$CRQ/rc.local-$(date +%Y%m%d);
+
+echo "";
+echo "Verifying pre-checks files" ;
+
+ls -lrt /root/PRE-$CRQ/ ; 
+
+echo ""' ;
+echo """;
+
+echo " "
+echo "	Done Prechecks in "$s - "`host $s | cut -d " " -f5`"".."
+echo " "
+done
+
+echo " "
+echo "!!!	Pre-checks completed... Please proceed !!!"
+# echo'; >> Checker_log_$CRQ 2>&1
+echo ""
+
+
+elif [ $ans == "2" ]
+
+then
+echo ""
+
+# Reading CRQ Number
+echo ""
+read -p "	Please enter the CRQ number? : " CRQ 
+echo ""
+
+echo "	Started Post-checks ..."
+
+for s in `cat hosts_list`
+do
+echo ""
+echo "	Taking post-checks in "$s - "`host $s | cut -d " " -f5`"" .." && sshpass -p01Mar2019 sshadmin $s -qt  sudo -- -sh -c <<EOF
+'export CRQ='"'$CRQ'"';
+echo "" ; 
+
+echo'; >> Checker_log_$CRQ 2>&1
+EOF
+
+echo " "
+echo "	Done Post-checks in "$s - "`host $s | cut -d " " -f5`"".."
+echo " "
+done
+
+echo "!!!	Post-checks completed !!! Please verify Checker_log_$CRQ ..."
+echo " "
+
+else 
+echo " "
+echo "	Please enter valid response..."
+echo " "
+exit 1
+
+
+fi
+
+#tail -f precheck_log_$CRQ
+# End
+# This python small program is proudly brought to you  by #
+#       Zaw Moe Myint                                     #
+#       Tier 4 Engineering Team                           #
+#       Version: beta                                     #
+# ======================================================= #
+
+import paramiko
+import sys
+import datetime
+import getpass
+import os
+import subprocess
+
+def myTime():
+#to calculate current date and time and return value as below format
+#yyyymmdd_hhmmss
+#this date and time return value is a string
+        now = datetime.datetime.now()
+        nowObj = slice(19)
+        myNow = str(now)[nowObj]
+        myNow = myNow.replace(":","")
+        myNow = myNow.replace(" ","_")
+        myNow = myNow.replace("-","")
+        return myNow
+
+def banner():
+#to display manual, help, contact or whatever information
+        os.system('clear')
+        print "\n\n\t\t# ====================================================== #"
+        print "\t\t# This python small program is proudly brought to you by #"
+        print "\t\t#       zawmoe.myint@centurylink.com                     #"
+        print "\t\t#       Version: beta                                    #"
+        print "\t\t# ====================================================== #"
+        print "\n\n\n\n"
+
+def footnote():
+#to display manual, help, contact or whatever information
+        print "\n\n\t\t# ====================================================== #"
+        print "\t\t# This python small program is proudly brought to you by #"
+        print "\t\t# if you found any problem please email to me            #"
+        print "\t\t#       zawmoe.myint@centurylink.com                     #"
+        print "\t\t# ====================================================== #"
+        print "\n\n"
+
+
+def getFQDN(var_HName):
+#to retrive FQDN of the server hostname
+        try:
+                with open('fqdn.txt') as x:
+                        lines = x.readlines()
+                        for line in lines:
+                                line = line.strip()
+                                if var_HName.find(line[0:line.find(',')]) > 0 and var_HName.find(line[0:line.find(',')]) < 8:
+                                        return var_HName + "." + line[line.find(',')+1:len(line)]
+        except IOError as e:
+                print ("(-) Error in reading fqdn.txt file")
+        return "Hostname Cannot find"
+
+
+
+def main():
+        os.system("stty erase '^H'")
+        var_HName = raw_input("Enter hostname [without domainname]: ")        
+        var_HName = var_HName.lower()
+        var_FQDN = getFQDN(var_HName)
+
+        var_FName = "report_" + var_FQDN + "_" + myTime() + ".txt"
+        if var_FQDN.find("find") < 0:
+                outputFile = open(var_FName,"w")
+                var_arg = "nslookup " + var_FQDN
+                p = subprocess.Popen(var_arg, stdout=subprocess.PIPE, shell=True)
+                (output, err) = p.communicate()
+                p_status = p.wait()
+                print output
+                outputFile.write(output)
+                var_arg = "echo netstat -an | sshadmin " + var_FQDN
+                p = subprocess.Popen(var_arg, stdout=subprocess.PIPE, shell=True)
+                (output, err) = p.communicate()
+                p_status = p.wait()
+                print output
+                outputFile.write(output)
+                var_arg = "echo netstat -rn | sshadmin " + var_FQDN
+                p = subprocess.Popen(var_arg, stdout=subprocess.PIPE, shell=True)
+                (output, err) = p.communicate()
+                p_status = p.wait()
+                print output
+                outputFile.write(output)
+                var_arg = "echo sudo -su svradmin netstat -puntal | sshadmin " + var_FQDN
+                p = subprocess.Popen(var_arg, stdout=subprocess.PIPE, shell=True)
+                (output, err) = p.communicate()
+                p_status = p.wait()
+                print output
+                outputFile.write(output)                
+                var_arg = "echo ifconfig | sshadmin " + var_FQDN
+                p = subprocess.Popen(var_arg, stdout=subprocess.PIPE, shell=True)
+                (output, err) = p.communicate()
+                p_status = p.wait()
+                print output
+                outputFile.write(output)
+        else:
+                print var_FQDN
+
+        var_choice = raw_input("Would you like to receive email for this output? [y/n]: ")
+        if var_choice == "y":
+                var_To = raw_input("Please enter your email address: ")
+                p = os.popen("echo %s | mailx -s %s -a %s %s" % ("Auto Report generated from Jumpbox",myTime(),var_FName,var_To) )
+                print "Please check your email.\n\n\n"
+        footnote()
+
+if __name__ == "__main__":
+        banner()    
+        main()
+#!/bin/bash
+
+rm -f Net_Frt.txt
+rm -f Citi_NET_results.csv
+
+set -m # Enable Job Control
+
+l=(0)
+nl=(1)
+ml=(0)
+line=$(awk '{print}' net_dev.txt | wc -l $STDOUT)
+user=Manager
+pass=im412ozc
+
+
+
+while [ "$ml" -lt "$line" ]
+do
+l=$[$l+1]
+nl=$[$nl+1]
+ml=$[$ml+1]
+
+DEVICE=$(awk NR==$l' { print $1 }' dev_int.txt)
+MGMT_IP=$(awk NR==$ml' { print $1 }' net_dev.txt)
+DEV_INT=$(awk NR==$l' { print $3 }' Net_dev.txt)
+DEV_INT_1=$(awk NR==$nl' { print $3 }' Net_dev.txt)
+
+/usr/bin/expect << EOF
+
+spawn ssh -o StrictHostKeyChecking=no $user@$MGMT_IP
+
+set timeout 10
+expect "password for Manager:" 
+send "$pass\r" 
+expect "%" 
+send "show interfaces $DEV_INT terse\r"
+expect "%"
+send "show interfaces $DEV_INT descriptions\r"
+expect "%"
+send "show interfaces $DEV_INT_1 terse\r" 
+expect "%"
+send "show interfaces $DEV_INT_1 descriptions\r"
+expect "%"
+send "exit\r"
+
+EOF
+l=$[$l+1]
+nl=$[$nl+1]
+
+done>>Net_Frt.txt
+
+l=(0)
+line=$(awk '{print}' Net_dev.txt | wc -l $STDOUT)
+
+while [ "$l" -lt "$line" ]
+do
+l=$[$l+1]
+
+DEVICE=$(awk NR==$l' { print $1 }' Net_dev.txt)
+DEV_INT=$(awk NR==$l' { print $3 }' Net_dev.txt)
+STATUS=$(cat Net_Frt.txt |grep -i $DEVICE -A2 | grep -v spawn | grep $DEV_INT | grep -v Manager | awk NR==1' { print $3 } ' $STDOUT)
+description=$(cat Net_Frt.txt |grep -i $DEVICE -A2 | grep -v spawn | grep $DEV_INT | grep -v Manager | awk NR==2' { print $4,$5,$6,$7 } ' $STDOUT)
+
+if [ "$STATUS" == "up" ]
+
+then
+
+echo "	$DEVICE	$DEV_INT	UP	$description"
+
+else
+echo "	$DEVICE	$DEV_INT	DOWN	$description"
+
+fi
+
+done>>Citi_NET_results.csv
+# Wait for all parallel jobs to finish
+while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
+
+#!/bin/bash
+# To update the Cstate & Pstate values and ensure /etc/grub.conf is a symlink
+# V 2.0 - added functions
+# V 3.0 - remote execution  -testing
+# By Sumith Azhi Valappil - Hosting TSE
+# 
+#
+
+echo ""
+read -p "Please enter the CRQ number? : " CRQ 
+echo ""
+
+Server_list=hosts_list
+LOG_File=~/cstate-pstate-log-$CRQ
+
+
+for s in `cat $Server_list`
+do
+echo " "
+echo "Checking in "$s - "`host $s | cut -d " " -f5`"".." && sshadmin $s -qt  'export CRQ='"'$CRQ'"' ; 
+# echo "" ; 
+
+fix_grub () {
+
+# Checking the OS version
+echo " "
+if [[ -n `cat /etc/redhat-release | grep -E 'release 6.'` ]];
+	then
+	echo "Fixing RHEL 6 Grub.."
+	echo " "
+
+# Variables
+file1=/etc/grub.conf
+file2=/boot/grub/grub.conf
+
+echo "Checking current Cstate-Pstate status.."
+echo " "
+egrep -i "cstate|pstate" $file2
+	if [ $? -eq 0 ]
+	then
+	echo " "
+	echo "cstate|pstate is already set in $file2.. No action required.."
+	echo " "
+	exit 0
+	else
+	echo "cstate|pstate values are not set. Fixing them.."  >&2
+	echo " "
+	echo "Backing up grub files.."
+	cp $file2 /var/tmp/boot-grub-conf-bkup
+	cp $file1 /var/tmp/grub-conf-bkup
+	echo " "
+	echo "Adding cstate|pstate to $file2.."
+	sed -i '/kernel/s/$/ intel_idle.max_cstate=0 intel_pstate=disable/' $file2 
+	echo " "
+	echo "Done.. verifying Cstate-Pstate in $file2.. "
+	echo " "
+	egrep -i "cstate|pstate" $file2
+	echo " "
+	fi
+  
+elif [[ -n `cat /etc/redhat-release | grep -E 'release 7.'` ]];
+	then
+	echo "RHEL 7 - Please fix manually.."
+	echo " "
+	exit
+fi
+}
+
+fix_link () {
+
+  echo "Verifying $file1 is a link file.. "
+  echo " "
+  ls -l $file1 $file2 
+  echo " "
+  	if [[ -L "$file1" ]]; then echo "$file1 is a symlink.."; 
+	echo " "
+	else echo "$file1 is not a symlink, fixing it..";
+	echo " "
+	rm -f $file1
+	ln -s $file2 $file1 
+	ls -l $file1 $file2
+	echo "Done.. "
+  	fi
+  exit 
+
+}
+
+echo "Cstate-pstate fix in "$s - "`host $s | cut -d " " -f5`"" completed..."
+echo "__________________________________________________________ "
+echo " "
+done
+
+echo " "
+echo "Fixing Grub is completed.. "
+echo " "
+
+sudo sh -c check_root
+sudo sh -c fix_grub
+sudo sh -c fix_link
+echo';
+
